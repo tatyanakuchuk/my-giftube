@@ -3,14 +3,16 @@
 require_once('functions.php');
 require_once('data.php');
 
-$page_content = include_template('index.php', [
-    'gifs' => $gifs
+$page_content = include_template('add.php', [
+    'gifs' => $gifs,
+    'categories' => $categories,
+    'title' => 'Добавить гифку'
 ]);
 
 $layout_content = include_template('layout.php', [
     'content' => $page_content,
     'categories' => $categories,
-    'title' => 'Главная страница'
+    'title' => 'Добавление новой гифки'
 ]);
 
 print($layout_content);

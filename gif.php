@@ -3,7 +3,7 @@
 require_once('functions.php');
 require_once('data.php');
 
-$page_content = include_template('index.php', [
+$page_content = include_template('gif.php', [
     'gifs' => $gifs
 ]);
 

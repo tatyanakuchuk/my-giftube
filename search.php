@@ -3,14 +3,15 @@
 require_once('functions.php');
 require_once('data.php');
 
-$page_content = include_template('index.php', [
-    'gifs' => $gifs
+$page_content = include_template('search.php', [
+    'gifs' => $gifs,
+    'title' => 'Результаты поиска'
 ]);
 
 $layout_content = include_template('layout.php', [
     'content' => $page_content,
     'categories' => $categories,
-    'title' => 'Главная страница'
+    'title' => 'Результаты поиска'
 ]);
 
 print($layout_content);

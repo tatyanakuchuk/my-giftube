@@ -10,7 +10,9 @@ $page_content = include_template('gif.php', [
 $layout_content = include_template('layout.php', [
     'content' => $page_content,
     'categories' => $categories,
-    'title' => 'Главная страница'
+    'title' => 'Название гифки',
+    'isGifPage' => true
 ]);
+
 
 print($layout_content);

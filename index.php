@@ -3,8 +3,11 @@
 require_once('functions.php');
 require_once('data.php');
 
+$pagination = include_template('pagination.php');
+
 $page_content = include_template('index.php', [
-    'gifs' => $gifs
+    'gifs' => $gifs,
+    'pagination' => $pagination
 ]);
 
 $layout_content = include_template('layout.php', [

@@ -3,7 +3,7 @@
 require_once('functions.php');
 require_once('data.php');
 
-$page_content = include_template('search.php', [
+$page_content = include_template('main.php', [
     'gifs' => $gifs,
     'title' => 'Результаты поиска'
 ]);

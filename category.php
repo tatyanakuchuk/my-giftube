@@ -3,8 +3,9 @@
 require_once('functions.php');
 require_once('data.php');
 
-$page_content = include_template('category.php', [
-    'gifs' => $gifs
+$page_content = include_template('main.php', [
+    'gifs' => $gifs,
+    'title' => 'Категория'
 ]);
 
 $layout_content = include_template('layout.php', [

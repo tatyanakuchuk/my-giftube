@@ -1,10 +1,16 @@
 <?php
 
+$isFormPage = true;
+
 require_once('data.php');
 require_once('functions.php');
 
-$page_content = include_template('signup.php', [
-    'title' => 'Регистрация'
+$signup_form = include_template('signup-form.php');
+
+$page_content = include_template('main.php', [
+    'form' => $signup_form,
+    'title' => 'Регистрация',
+    'isFormPage' => $isFormPage
 ]);
 
 $layout_content = include_template('layout.php', [

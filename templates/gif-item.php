@@ -1,4 +1,6 @@
-<li class="gif gif-list__item">
+<?php $classname = ($isGifPage) ? "gif--small" : ""; ?>
+
+<li class="gif <?= $classname; ?> gif-list__item">
     <div class="gif__picture">
         <a href="/gif.php" class="gif__preview">
             <img src="<?= $gif['gif_img']; ?>" alt="" width="260" height="260">

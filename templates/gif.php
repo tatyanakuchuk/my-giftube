@@ -57,7 +57,10 @@
 
     <ul class="gif-list gif-list--vertical">
         <?php foreach ($gifs as $gif): ?>
-            <?= include_template('gif-item.php', ['gif' => $gif]); ?>
+            <?= include_template('gif-item.php', [
+                'gif' => $gif,
+                'isGifPage' => $isGifPage
+            ]); ?>
         <?php endforeach; ?>
     </ul>
 </aside>

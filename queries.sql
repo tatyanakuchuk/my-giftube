@@ -35,11 +35,11 @@ SET dt_add = NOW(),
     category_id = 8,
     user_id = 2,
     title = 'Гомерчик',
-    description = 'Тренировка усатого :)',
-    img_path = 'uploads/ani.gif',
-    likes_count = 10,
-    favs_count = 12,
-    views_count = 21;
+    description = 'Какой-то комментарий здесь.',
+    img_path = 'uploads/gomer.gif',
+    likes_count = 13,
+    favs_count = 19,
+    views_count = 25;
 
 INSERT INTO gifs
 SET dt_add = NOW(),

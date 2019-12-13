@@ -224,9 +224,10 @@ JOIN categories c ON g.category_id = c.id
 JOIN users u ON g.user_id = u.id
 WHERE g.id = '1';
 
--- получить список избранных гифок у пользователя: ???
-SELECT g.id, title, img_path
+-- получить список избранных гифок у пользователя:
+SELECT g.id, title, img_path, likes_count, u.name
 FROM gifs g
+JOIN users u ON g.user_id = u.id
 JOIN gifs_fav gf ON gf.gif_id = g.id
 AND gf.user_id = '1';
 
@@ -251,6 +252,5 @@ GROUP BY gif_id;
 -- получить список самых популярных гифок по их идентификатору:
 SELECT g.id, name, title, img_path, likes_count
 FROM gifs g
-JOIN gifs_like gl ON gl.gif_id = g.id
 JOIN users u ON g.user_id = u.id
 ORDER BY likes_count DESC;

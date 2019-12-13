@@ -142,14 +142,45 @@ SET dt_add = NOW(),
     password = 'secret5',
     avatar_path = 'uploads/avatar/avatar5a7d69e385bf6.jpg';
 
-INSERT INTO gifs_like
-SET user_id = 5,
-    gif_id = 6;
+-- Записи в таблицу gifs_like
+INSERT INTO gifs_like(user_id, gif_id)
+VALUES (5, 6);
 
-INSERT INTO gifs_fav
-SET user_id = 1,
-    gif_id = 3;
+INSERT INTO gifs_like(user_id, gif_id)
+VALUES (2, 8);
 
+INSERT INTO gifs_like(user_id, gif_id)
+VALUES (2, 4);
+
+INSERT INTO gifs_like(user_id, gif_id)
+VALUES (1, 3);
+
+INSERT INTO gifs_like(user_id, gif_id)
+VALUES (1, 9);
+
+INSERT INTO gifs_like(user_id, gif_id)
+VALUES (5, 9);
+
+-- Записи в таблицу gifs_fav
+INSERT INTO gifs_fav(user_id, gif_id)
+VALUES (1, 3);
+
+INSERT INTO gifs_fav(user_id, gif_id)
+VALUES (1, 4);
+
+INSERT INTO gifs_fav(user_id, gif_id)
+VALUES (4, 5);
+
+INSERT INTO gifs_fav(user_id, gif_id)
+VALUES (4, 1);
+
+INSERT INTO gifs_fav(user_id, gif_id)
+VALUES (1, 6);
+
+INSERT INTO gifs_fav(user_id, gif_id)
+VALUES (2, 3);
+
+-- Записи в таблицу comments
 INSERT INTO comments
 SET dt_add = NOW(),
     user_id = 5,
@@ -193,21 +224,21 @@ JOIN categories c ON g.category_id = c.id
 JOIN users u ON g.user_id = u.id
 WHERE g.id = '1';
 
--- получить список избранных гифок у пользователя:
-SELECT g.id, name, title, img_path, likes_count
+-- получить список избранных гифок у пользователя: ???
+SELECT g.id, title, img_path
 FROM gifs g
 JOIN gifs_fav gf ON gf.gif_id = g.id
-JOIN users u ON gf.user_id = u.id;
+AND gf.user_id = '1';
 
 -- получить список комментариев к гифке по её идентификатору:
 SELECT g.id, c.dt_add, avatar_path, name, comment_text
 FROM comments c
 JOIN gifs g ON g.id = c.gif_id
 JOIN users u ON c.user_id = u.id
-WHERE g.id = '2';
+WHERE g.id = '5';
 
 -- получить список самых свежих гифок по их идентификатору:
-SELECT g.id, name, title, img_path, likes_count
+SELECT g.id, g.dt_add, name, title, img_path, likes_count
 FROM gifs g
 JOIN users u ON g.user_id = u.id
 ORDER BY g.dt_add DESC;

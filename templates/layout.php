@@ -48,7 +48,9 @@
                     <h3 class="navigation__title navigation__title--list">Категории</h3>
                     <nav class="navigation__links">
                         <?php foreach ($categories as $category): ?>
-                            <a href="/category.php"><?= $category; ?></a>
+
+                            <a href="/"><?= $category['name']; ?></a>
+
                         <?php endforeach; ?>
                     </nav>
                 </div>

@@ -59,7 +59,7 @@
     <h3 class="content__additional-title">Похожие гифки:</h3>
 
     <ul class="gif-list gif-list--vertical">
-        <?php foreach ($similar_gifs as $gif): ?>
+        <?php foreach ($gifs as $gif): ?>
             <?= include_template('gif-item.php', [
                 'gif' => $gif,
                 'isGifPage' => $isGifPage

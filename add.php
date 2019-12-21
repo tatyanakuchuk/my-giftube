@@ -77,8 +77,6 @@ if(!$connect) {
             ]);
         }
         else {
-
-
             $sql = 'INSERT INTO gifs (dt_add, category_id, user_id, title, description, ' .
                     'img_path, likes_count, favs_count, views_count) ' .
                     'VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';

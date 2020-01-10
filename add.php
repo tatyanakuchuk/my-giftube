@@ -68,6 +68,8 @@ if(!$connect) {
             }
         }
 
+        $user_id = $_SESSION['user']['id'];
+
         if (count($errors)) {
             $add_form = include_template('add-form.php', [
                 'gif' => $gif,
@@ -78,18 +80,15 @@ if(!$connect) {
         }
         else {
             $sql = 'INSERT INTO gifs (dt_add, category_id, user_id, title, description, ' .
-                    'img_path, likes_count, favs_count, views_count) ' .
-                    'VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
+                    'img_path) ' .
+                    'VALUES (NOW(), ?, ?, ?, ?, ?)';
 
             $stmt = db_get_prepare_stmt($connect, $sql, [
                 $gif['category'],
-                4,
+                $user_id,
                 $gif['gif-title'],
                 $gif['gif-description'],
-                $gif['img_path'],
-                6,
-                9,
-                15
+                $gif['img_path']
             ]);
 
             $res = mysqli_stmt_execute($stmt);

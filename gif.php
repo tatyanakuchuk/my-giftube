@@ -196,6 +196,7 @@ else {
         'gif' => $gif,
         'comments' => $comments,
         'gifs' => $similar_gifs,
+        'count_likes' => $count_likes,
         'isGifPage' => $isGifPage
     ]);
 

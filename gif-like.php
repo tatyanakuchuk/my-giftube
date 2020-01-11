@@ -26,8 +26,6 @@ else {
                 $res_count_likes = mysqli_query($connect, $sql_count_likes);
                 if($res_count_likes) {
                     $count_likes = mysqli_fetch_assoc($res_count_likes);
-                    // var_dump($count_likes['count(id)']);
-                    // die();
                 } else {
                     $error = mysqli_error($connect);
                     print('Ошибка MySQL: ' . $error);
@@ -57,8 +55,6 @@ else {
                 $res_count_likes = mysqli_query($connect, $sql_count_likes);
                 if($res_count_likes) {
                     $count_likes = mysqli_fetch_assoc($res_count_likes);
-                    // var_dump($count_likes['count(id)']);
-                    // die();
                 } else {
                     $error = mysqli_error($connect);
                     print('Ошибка MySQL: ' . $error);

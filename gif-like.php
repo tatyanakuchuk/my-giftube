@@ -21,6 +21,9 @@ else {
             $res = mysqli_stmt_execute($stmt);
             if ($res) {
 
+                $sql_update_views = "UPDATE gifs SET views_count = views_count + 1 WHERE id = " . $gif_id;
+                $res_update_views = mysqli_query($connect, $sql_update_views);
+
                 // подсчет лайков
                 $sql_count_likes = 'SELECT count(id) FROM gifs_like WHERE gif_id = ' . $gif_id;
                 $res_count_likes = mysqli_query($connect, $sql_count_likes);
@@ -50,6 +53,9 @@ else {
             $sql = 'DELETE FROM gifs_like WHERE user_id = ' . $user_id . ' AND gif_id = ' . $gif_id;
             $res = mysqli_query($connect, $sql);
             if ($res) {
+                $sql_update_views = "UPDATE gifs SET views_count = views_count + 1 WHERE id = " . $gif_id;
+                $res_update_views = mysqli_query($connect, $sql_update_views);
+
                 // подсчет лайков
                 $sql_count_likes = 'SELECT count(id) FROM gifs_like WHERE gif_id = ' . $gif_id;
                 $res_count_likes = mysqli_query($connect, $sql_count_likes);

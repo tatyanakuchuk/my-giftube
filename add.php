@@ -80,15 +80,18 @@ if(!$connect) {
         }
         else {
             $sql = 'INSERT INTO gifs (dt_add, category_id, user_id, title, description, ' .
-                    'img_path) ' .
-                    'VALUES (NOW(), ?, ?, ?, ?, ?)';
+                    'img_path, likes_count, favs_count, views_count) ' .
+                    'VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
 
             $stmt = db_get_prepare_stmt($connect, $sql, [
                 $gif['category'],
                 $user_id,
                 $gif['gif-title'],
                 $gif['gif-description'],
-                $gif['img_path']
+                $gif['img_path'],
+                0,
+                0,
+                0
             ]);
 
             $res = mysqli_stmt_execute($stmt);

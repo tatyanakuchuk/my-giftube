@@ -15,6 +15,14 @@ if(!$connect) {
     print('Ошибка подключения: ' . mysqli_connect_error());
 } else {
 
+    $res_count_gifs = mysqli_query($connect, 'SELECT count(*) AS cnt FROM gifs');
+    $items_count = mysqli_fetch_assoc($res_count_gifs)['cnt'];
+    $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
+    $page_items = 9;
+    $offset = ($current_page - 1) * $page_items;
+    $pages_count = ceil($items_count / $page_items);
+    $pages = range(1, $pages_count);
+
     // 1. запрос для получения списка категорий;
     $sql_cat = 'SELECT * FROM categories';
     $res_cat = mysqli_query($connect, $sql_cat);
@@ -29,7 +37,7 @@ if(!$connect) {
     $sql_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
                 'FROM gifs g ' .
                 'JOIN users u ON g.user_id = u.id ' .
-                'ORDER BY likes_count DESC LIMIT 9';
+                'ORDER BY likes_count DESC LIMIT ' . $page_items . ' OFFSET ' . $offset;
 
     //отправляем запрос и получаем результат
     $res_gifs = mysqli_query($connect, $sql_gifs);
@@ -48,7 +56,7 @@ if(!$connect) {
         $sql_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
                     'FROM gifs g ' .
                     'JOIN users u ON g.user_id = u.id ' .
-                    'ORDER BY g.dt_add DESC LIMIT 9';
+                    'ORDER BY g.dt_add DESC LIMIT ' . $page_items . ' OFFSET ' . $offset;
 
         $res_gifs = mysqli_query($connect, $sql_gifs);
 
@@ -62,7 +70,11 @@ if(!$connect) {
 
 }
 
-$pagination = include_template('pagination.php');
+$pagination = include_template('pagination.php', [
+    'pages_count' => $pages_count,
+    'pages' => $pages,
+    'current_page' => $current_page
+]);
 
 $page_content = include_template('main.php', [
     'gifs' => $gifs,

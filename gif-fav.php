@@ -1,7 +1,7 @@
 <?php
 
 session_start();
-$isFav = false;
+// $isFav = false;
 require_once('functions.php');
 
 $connect = mysqli_connect("localhost", "root", "", "giftube");
@@ -20,6 +20,11 @@ else {
             $stmt = db_get_prepare_stmt($connect, $sql, [$user_id, $gif_id]);
             $res = mysqli_stmt_execute($stmt);
             if ($res) {
+                // обновляем количество добавлений в избранное
+                $sql_update_favs = "UPDATE gifs SET favs_count = favs_count + 1 WHERE id = " . $gif_id;
+                $res_update_favs = mysqli_query($connect, $sql_update_favs);
+
+                // обновляем количество просмотров в БД
                 $sql_update_views = "UPDATE gifs SET views_count = views_count + 1 WHERE id = " . $gif_id;
                 $res_update_views = mysqli_query($connect, $sql_update_views);
 
@@ -34,6 +39,10 @@ else {
             $sql = 'DELETE FROM gifs_fav WHERE user_id = ' . $user_id . ' AND gif_id = ' . $gif_id;
             $res = mysqli_query($connect, $sql);
             if ($res) {
+                // обновляем количество добавлений в избранное
+                $sql_update_favs = "UPDATE gifs SET favs_count = favs_count - 1 WHERE id = " . $gif_id;
+                $res_update_favs = mysqli_query($connect, $sql_update_favs);
+
                 $sql_update_views = "UPDATE gifs SET views_count = views_count + 1 WHERE id = " . $gif_id;
                 $res_update_views = mysqli_query($connect, $sql_update_views);
 

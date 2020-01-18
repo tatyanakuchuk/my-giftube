@@ -15,8 +15,8 @@
         <div class="gif__desctiption">
             <div class="gif__description-data">
                 <span class="gif__username"><?= $gif['name']; ?></span>
-                <span class="gif__views"><?= $gif['views_count']; ?></span>
-                <span class="gif__likes"><?= $gif['likes_count']; ?></span>
+                <span class="gif__views"><?= $gif['views_count'] > 0 ? $gif['views_count'] : ""; ?></span>
+                <span class="gif__likes"><?= $gif['likes_count'] > 0 ? $gif['likes_count'] : ""; ?></span>
             </div>
             <div class="gif__description">
                 <p><?= $gif['description']; ?></p>

@@ -28,7 +28,7 @@ if(!$connect) {
         $items_count = mysqli_fetch_assoc($res_count_gifs)['cnt'];
 
         $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
-        $page_items = 9;
+        $page_items = 3;
         $offset = ($current_page - 1) * $page_items;
         $pages_count = ceil($items_count / $page_items);
         $pages = range(1, $pages_count);
@@ -46,14 +46,19 @@ if(!$connect) {
         $res = mysqli_stmt_get_result($stmt);
         if ($res) {
             $gifs = mysqli_fetch_all($res, MYSQLI_ASSOC);
-            $pagination = include_template('pagination.php', [
-                'pages_count' => $pages_count,
-                'pages' => $pages,
-                'current_page' => $current_page
-            ]);
+
         }
     }
+    $param = isset($_GET['q']) ? ('q=' . $_GET['q'] . '&') : '';
+
 }
+
+$pagination = include_template('pagination.php', [
+    'param' => $param,
+    'pages_count' => $pages_count,
+    'pages' => $pages,
+    'current_page' => $current_page
+]);
 
 $page_content = include_template('main.php', [
     'gifs' => $gifs,

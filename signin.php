@@ -1,30 +1,24 @@
 <?php
 
 session_start();
-
 $isFormPage = true;
 
-require_once('functions.php');
+require_once('bootstrap.php');
 
-$connect = mysqli_connect("localhost", "root", "", "giftube");
-mysqli_set_charset($connect, "utf8");
-
-if(!$connect) {
-    print('Ошибка подключения: ' . mysqli_connect_error());
-} else {
-
-    // 1. запрос для получения списка категорий;
-    $sql_cat = 'SELECT * FROM categories';
-    $res_cat = mysqli_query($connect, $sql_cat);
-    if($res_cat) {
-        $categories = mysqli_fetch_all($res_cat, MYSQLI_ASSOC);
+if ($dbHelper->getLastError()) {
+    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+}
+else {
+    // Получение списка категорий
+    $dbHelper->executeQuery('SELECT * FROM categories');
+    if (!$dbHelper->getLastError()) {
+        $categories = $dbHelper->getResultAsArray();
     }
     else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
-    // 2. send form
+    // send form
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $sign_in = $_POST;
 
@@ -49,18 +43,23 @@ if(!$connect) {
         }
 
         // проверка на существование пользователя с таким же email
-        $sql = 'SELECT * FROM users WHERE email = "' . $sign_in['email'] . '"';
-        $res_pass = mysqli_query($connect, $sql);
-        if($res_pass) {
-            $user = $res_pass ? mysqli_fetch_all($res_pass, MYSQLI_ASSOC) : null;
-
+        $sql = 'SELECT * FROM users WHERE email = ?';
+        $pass = $dbHelper->executeQuery($sql, [
+            $sign_in['email']
+        ]);
+        if (!$dbHelper->getLastError()) {
+            $user = $pass ? $dbHelper->getResultAsArray() : null;
             if($user) {
                 if (password_verify($sign_in['password'], $user[0]['password'])) {
                     $_SESSION['user'] = $user[0];
-                } else {
+                }
+                else {
                     $errors['password'] = 'Вы ввели неверный пароль';
                 }
             }
+        }
+        else {
+            show_error('Ошибка MySQL: ', $dbHelper->getLastError());
         }
 
         if (count($errors)) {
@@ -78,10 +77,7 @@ if(!$connect) {
     else {
         $signin_form = include_template('signin-form.php');
     }
-
 }
-
-// $signin_form = include_template('signin-form.php');
 
 $page_content = include_template('main.php', [
     'form' => $signin_form,
@@ -104,7 +100,5 @@ else {
         'title' => 'Вход на сайт'
     ]);
 }
-
-
 
 print($layout_content);

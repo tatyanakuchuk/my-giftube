@@ -1,94 +1,84 @@
 <?php
 
 session_start();
-
 $isGifPage = true;
 
-require_once('functions.php');
+require_once('bootstrap.php');
 
-//подключение к MySQL
-$connect = mysqli_connect("localhost", "root", "", "giftube");
-mysqli_set_charset($connect, "utf8");
-
-if(!$connect) {
-    print('Ошибка подключения: ' . mysqli_connect_error());
+if ($dbHelper->getLastError()) {
+    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
 }
 else {
-
-    // 1. запрос для получения списка категорий;
-    $sql_cat = 'SELECT * FROM categories';
-    $res_cat = mysqli_query($connect, $sql_cat);
-    if($res_cat) {
-        $categories = mysqli_fetch_all($res_cat, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+    // Получение списка категорий
+    $dbHelper->executeQuery('SELECT * FROM categories');
+    if (!$dbHelper->getLastError()) {
+        $categories = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
     if (isset($_GET['id'])) {
         $gif_id = $_GET['id'];
-    }
 
-    // 2. запрос для получения данных гифки по id
-    $sql_gif = 'SELECT g.id, category_id, u.name, title, img_path, ' .
-                'likes_count, favs_count, views_count, description ' .
-                'FROM gifs g ' .
-                'JOIN categories c ON g.category_id = c.id ' .
-                'JOIN users u ON g.user_id = u.id ' .
-                'WHERE g.id = ' . $gif_id;
-
-    $res_gif = mysqli_query($connect, $sql_gif);
-
-    if($res_gif) {
-        $gif = mysqli_fetch_assoc($res_gif);
-        if(!isset($gif)) {
-            header('Location: /error404.php');
-            http_response_code(404);
-            $is404error = true;
+        // Данные гифки по id
+        $sql_gif = 'SELECT g.id, category_id, u.name, title, img_path, ' .
+        'likes_count, favs_count, views_count, description ' .
+        'FROM gifs g ' .
+        'JOIN categories c ON g.category_id = c.id ' .
+        'JOIN users u ON g.user_id = u.id ' .
+        'WHERE g.id = ?';
+        $dbHelper->executeQuery($sql_gif, [$gif_id]);
+        if (!$dbHelper->getLastError()) {
+            $gif = $dbHelper->getResultAsArray()[0];
+            if(!isset($gif)) {
+                header('Location: /error404.php');
+                http_response_code(404);
+                $is404error = true;
+            }
         }
-    }
-    else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+        else {
+            show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+        }
     }
 
     // если гифка добавлена в избранное
     if (isset($_SESSION['user'])) {
         $user_id = $_SESSION['user']['id'];
-        $gif_id = $_GET['id'];
 
         $isLiked = false;
         $isFav = false;
 
-        $sql_fav = 'SELECT id FROM gifs_fav WHERE user_id = ' . $user_id .
-        ' AND gif_id = ' . $gif_id;
-        $res_fav = mysqli_query($connect, $sql_fav);
-
-        if($res_fav) {
-            $fav = mysqli_fetch_assoc($res_fav);
+        $sql_fav = 'SELECT id FROM gifs_fav WHERE user_id = ? AND gif_id = ?';
+        $dbHelper->executeQuery($sql_fav, [
+            $user_id,
+            $gif_id
+        ]);
+        if (!$dbHelper->getLastError()) {
+            $fav = $dbHelper->getResultAsArray()[0];
             if(!empty($fav)) {
-            $isFav = true;
-
-                // header('Location: /gif.php?id=' . $gif_id . "");
+                $isFav = true;
             }
         }
+        else {
+            show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+        }
 
-        $sql_like = 'SELECT id FROM gifs_like WHERE user_id = ' . $user_id .
-        ' AND gif_id = ' . $gif_id;
-        $res_like = mysqli_query($connect, $sql_like);
-
-        if($res_like) {
-            $like = mysqli_fetch_assoc($res_like);
+        $sql_like = 'SELECT id FROM gifs_like WHERE user_id = ? AND gif_id = ?';
+        $dbHelper->executeQuery($sql_like, [
+            $user_id,
+            $gif_id
+        ]);
+        if (!$dbHelper->getLastError()) {
+            $like = $dbHelper->getResultAsArray()[0];
             if(!empty($like)) {
                 $isLiked = true;
             }
         }
-    }
-    // end если гифка добавлена в избранное
-
-    // 3. add comment
-    if (isset($_SESSION['user'])) {
-        $user_id = $_SESSION['user']['id'];
+        else {
+            show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+        }
+        // end если гифка добавлена в избранное
 
         // add comment
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -101,15 +91,15 @@ else {
                 'FROM gifs g ' .
                 'JOIN categories c ON g.category_id = c.id ' .
                 'JOIN users u ON g.user_id = u.id ' .
-                'WHERE g.id = ' . $gif_id;
+                'WHERE g.id = ?';
 
-            $res_gif = mysqli_query($connect, $sql_gif);
-            if($res_gif) {
-                $gif = mysqli_fetch_assoc($res_gif);
+            $dbHelper->executeQuery($sql_gif, [$gif_id]);
+
+            if (!$dbHelper->getLastError()) {
+                $gif = $dbHelper->getResultAsArray()[0];
             }
             else {
-                $error = mysqli_error($connect);
-                print('Ошибка MySQL: ' . $error);
+                show_error('Ошибка MySQL: ', $dbHelper->getLastError());
             }
 
             $required = ['comment'];
@@ -122,58 +112,61 @@ else {
             }
 
             if(!count($errors)) {
-                $sql = "INSERT INTO comments (dt_add, user_id, gif_id, comment_text) VALUES (NOW(), ?, ?, ?)";
-                $stmt = db_get_prepare_stmt($connect, $sql, [$user_id, $gif_id, $comment]);
-                $res = mysqli_stmt_execute($stmt);
-                if ($res) {
-                    $sql_update_views = "UPDATE gifs SET views_count = views_count + 1 WHERE id = " . $gif_id;
-                    $res_update_views = mysqli_query($connect, $sql_update_views);
-
+                $sql = 'INSERT INTO comments (dt_add, user_id, gif_id, comment_text) VALUES (NOW(), ?, ?, ?)';
+                $dbHelper->executeQuery($sql, [
+                    $user_id,
+                    $gif_id,
+                    $comment
+                ]);
+                if (!$dbHelper->getLastError()) {
+                    $sql_update_views = 'UPDATE gifs SET views_count = views_count + 1 WHERE id = ?';
+                    $dbHelper->executeQuery($sql_update_views, [$gif_id]);
                     $content = include_template('gif.php', [
                         'gif' => $gif,
                         'comments' => $comments,
                         'gifs' => $similar_gifs,
                         'isGifPage' => $isGifPage
                     ]);
-                } else {
-                    $error = mysqli_error($connect);
-                    print($error);
+                }
+                else {
+                    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
                 }
             }
         }
     }
 
-    // 4. all comments
+    // all comments
     $sql_comments = 'SELECT c.dt_add, avatar_path, name, comment_text ' .
                 'FROM comments c ' .
                 'JOIN gifs g ON g.id = c.gif_id ' .
                 'JOIN users u ON c.user_id = u.id ' .
-                'WHERE g.id = ' . $gif_id;
-
-    $res_comments = mysqli_query($connect, $sql_comments);
-
-    if($res_comments) {
-        $comments = mysqli_fetch_all($res_comments, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+                'WHERE g.id = ?';
+    $dbHelper->executeQuery($sql_comments, [$gif_id]);
+    if (!$dbHelper->getLastError()) {
+        $comments = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
-    // 5. запрос для списка похожих гифок
+    // запрос для списка похожих гифок
     if(!$is404error) {
         $sql_similar = 'SELECT g.id, category_id, u.name, title, img_path, likes_count ' .
-                    'FROM gifs g ' .
-                    'JOIN categories c ON g.category_id = c.id ' .
-                    'JOIN users u ON g.user_id = u.id ' .
-                    'WHERE category_id = ' . $gif['category_id'] .
-                    ' AND g.id NOT IN(' . $gif_id . ') ' .
-                    ' LIMIT 6';
-        $res_similar = mysqli_query($connect, $sql_similar);
-        if($res_similar) {
-            $similar_gifs = mysqli_fetch_all($res_similar, MYSQLI_ASSOC);
-        } else {
-            $error = mysqli_error($connect);
-            print('Ошибка MySQL: ' . $error);
+        'FROM gifs g ' .
+        'JOIN categories c ON g.category_id = c.id ' .
+        'JOIN users u ON g.user_id = u.id ' .
+        'WHERE category_id = ? AND g.id NOT IN(?) ' .
+        'LIMIT 6';
+
+        $dbHelper->executeQuery($sql_similar, [
+            $gif['category_id'],
+            $gif_id
+        ]);
+        if (!$dbHelper->getLastError()) {
+            $similar_gifs = $dbHelper->getResultAsArray();
+        }
+        else {
+            show_error('Ошибка MySQL: ', $dbHelper->getLastError());
         }
     }
 }

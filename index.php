@@ -3,11 +3,7 @@
 session_start();
 $isMainPage = true;
 
-require_once('functions.php');
-require_once('Database.php');
-require_once('config.php');
-
-$dbHelper = new Database(...$db_config);
+require_once('bootstrap.php');
 
 if ($dbHelper->getLastError()) {
     show_error('Ошибка MySQL: ', $dbHelper->getLastError());
@@ -48,9 +44,13 @@ else {
     $sql_top_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
     'FROM gifs g ' .
     'JOIN users u ON g.user_id = u.id ' .
-    'ORDER BY g.likes_count DESC LIMIT ? OFFSET ?';
+    'ORDER BY g.views_count DESC LIMIT ? OFFSET ?';
 
-    $dbHelper->executeQuery($sql_top_gifs, [$page_items, $offset]);
+    $dbHelper->executeQuery($sql_top_gifs, [
+        $page_items,
+        $offset
+    ]);
+
     if (!$dbHelper->getLastError()) {
         $gifs = $dbHelper->getResultAsArray();
     }

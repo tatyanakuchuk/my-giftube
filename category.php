@@ -2,60 +2,67 @@
 
 session_start();
 
-require_once('functions.php');
+require_once('bootstrap.php');
 
-$connect = mysqli_connect("localhost", "root", "", "giftube");
-mysqli_set_charset($connect, "utf8");
-
-if(!$connect) {
-    print('Ошибка подключения: ' . mysqli_connect_error());
-} else {
-
-    if (isset($_GET['id'])) {
-        $category_id = $_GET['id'];
+if ($dbHelper->getLastError()) {
+    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+}
+else {
+    // Получение списка категорий
+    $dbHelper->executeQuery('SELECT * FROM categories');
+    if (!$dbHelper->getLastError()) {
+        $categories = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
-    $res_count_gifs = mysqli_query($connect, 'SELECT count(*) AS cnt FROM gifs WHERE category_id = ' . $category_id);
-    $items_count = mysqli_fetch_assoc($res_count_gifs)['cnt'];
+    $sql = 'SELECT count(*) AS cnt FROM gifs WHERE category_id = ?';
+    $dbHelper->executeQuery($sql, [
+        $_GET['id']
+    ]);
+    if (!$dbHelper->getLastError()) {
+        $items_count = $dbHelper->getResultAsArray()[0]['cnt'];
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+    }
+
     $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
     $page_items = 3;
     $offset = ($current_page - 1) * $page_items;
     $pages_count = ceil($items_count / $page_items);
     $pages = range(1, $pages_count);
 
-    // 1. запрос для получения списка категорий;
-    $sql_cat = 'SELECT * FROM categories';
-    $res_cat = mysqli_query($connect, $sql_cat);
-    if($res_cat) {
-        $categories = mysqli_fetch_all($res_cat, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+    // Получение названия категории
+    $dbHelper->executeQuery('SELECT name FROM categories WHERE id = ?', [
+        $_GET['id']
+    ]);
+    if (!$dbHelper->getLastError()) {
+        $category_name = $dbHelper->getResultAsArray()[0];
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
-    // 2. запрос для получения названия категории
-    $sql_cat_name = 'SELECT name FROM categories WHERE id = ' . $category_id;
-    $res_cat_name = mysqli_query($connect, $sql_cat_name);
-    if($res_cat_name) {
-        $category_name = mysqli_fetch_assoc($res_cat_name);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
-    }
-
-    // 3. запрос для получения списка гифок по категории
+    // Список гифок по категории
     $sql_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
-                'FROM gifs g ' .
-                'JOIN users u ON g.user_id = u.id ' .
-                'WHERE g.category_id = ' . $category_id .
-                ' ORDER BY g.dt_add DESC LIMIT ' . $page_items . ' OFFSET ' . $offset;
+    'FROM gifs g ' .
+    'JOIN users u ON g.user_id = u.id ' .
+    'WHERE g.category_id = ? ' .
+    'ORDER BY g.dt_add DESC LIMIT ? OFFSET ?';
 
-    $res_gifs = mysqli_query($connect, $sql_gifs);
-    if($res_gifs) {
-        $gifs = mysqli_fetch_all($res_gifs, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+    $dbHelper->executeQuery($sql_gifs, [
+        $_GET['id'],
+        $page_items,
+        $offset
+    ]);
+
+    if (!$dbHelper->getLastError()) {
+        $gifs = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
     $param = isset($_GET['id']) ? ('id=' . $_GET['id'] . '&') : '';

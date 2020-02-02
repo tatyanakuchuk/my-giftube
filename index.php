@@ -1,79 +1,74 @@
 <?php
 
 session_start();
-
 $isMainPage = true;
 
-require_once('functions.php');
+require_once('bootstrap.php');
 
-//подключение к MySQL
-$connect = mysqli_connect("localhost", "root", "", "giftube");
-mysqli_set_charset($connect, "utf8");
+if ($dbHelper->getLastError()) {
+    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+}
+else {
+    // Получение списка категорий
+    $dbHelper->executeQuery('SELECT * FROM categories');
+    if (!$dbHelper->getLastError()) {
+        $categories = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+    }
 
-//проверка подключения
-if(!$connect) {
-    print('Ошибка подключения: ' . mysqli_connect_error());
-} else {
+    // Получение количества гифок
+    $dbHelper->executeQuery('SELECT COUNT(*) AS cnt FROM gifs');
+    if (!$dbHelper->getLastError()) {
+        $items_count = $dbHelper->getResultAsArray()[0]['cnt'];
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+    }
 
-    $res_count_gifs = mysqli_query($connect, 'SELECT count(*) AS cnt FROM gifs');
-    $items_count = mysqli_fetch_assoc($res_count_gifs)['cnt'];
     $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
     $page_items = 9;
+
     $offset = ($current_page - 1) * $page_items;
     $pages_count = ceil($items_count / $page_items);
     $pages = range(1, $pages_count);
 
-    // 1. запрос для получения списка категорий;
-    $sql_cat = 'SELECT * FROM categories';
-    $res_cat = mysqli_query($connect, $sql_cat);
-    if($res_cat) {
-        $categories = mysqli_fetch_all($res_cat, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
-    }
+    // Запрос: получение списка новых гифок
+    $sql_new_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
+    'FROM gifs g ' .
+    'JOIN users u ON g.user_id = u.id ' .
+    'ORDER BY g.dt_add DESC LIMIT ? OFFSET ?';
 
-    if (isset($_GET['tab'])) {
+    // Запрос: получение списка топовых гифок
+    $sql_top_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
+    'FROM gifs g ' .
+    'JOIN users u ON g.user_id = u.id ' .
+    'ORDER BY g.views_count DESC LIMIT ? OFFSET ?';
 
-        // 3. создаем запрос для получения списка свежих гифок
-        $sql_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
-                    'FROM gifs g ' .
-                    'JOIN users u ON g.user_id = u.id ' .
-                    'ORDER BY g.dt_add DESC LIMIT ' . $page_items . ' OFFSET ' . $offset;
+    $dbHelper->executeQuery($sql_top_gifs, [
+        $page_items,
+        $offset
+    ]);
 
-        $res_gifs = mysqli_query($connect, $sql_gifs);
-
-        if($res_gifs) {
-            $gifs = mysqli_fetch_all($res_gifs, MYSQLI_ASSOC);
-        }
-        else {
-            $error = mysqli_error($connect);
-            print('Ошибка MySQL: ' . $error);
-        }
+    if (!$dbHelper->getLastError()) {
+        $gifs = $dbHelper->getResultAsArray();
     }
     else {
-        // 2. создаем запрос для получения списка топовых гифок
-        $sql_gifs = 'SELECT g.id, name, title, img_path, likes_count ' .
-                    'FROM gifs g ' .
-                    'JOIN users u ON g.user_id = u.id ' .
-                    'ORDER BY likes_count DESC LIMIT ' . $page_items . ' OFFSET ' . $offset;
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+    }
 
-        //отправляем запрос и получаем результат
-        $res_gifs = mysqli_query($connect, $sql_gifs);
-        //запрос выполнен успешно
-        if($res_gifs) {
-            //получаем гифки в виде двумерного массива
-            $gifs = mysqli_fetch_all($res_gifs, MYSQLI_ASSOC);
+    if (isset($_GET['tab']) && $_GET['tab'] == 'new') {
+        $dbHelper->executeQuery($sql_new_gifs, [$page_items, $offset]);
+        if (!$dbHelper->getLastError()) {
+            $gifs = $dbHelper->getResultAsArray();
         }
         else {
-            //получаем текст последней ошибки
-            $error = mysqli_error($connect);
-            print('Ошибка MySQL: ' . $error);
+            show_error('Ошибка MySQL: ', $dbHelper->getLastError());
         }
     }
 
     $param = isset($_GET['tab']) && $_GET['tab'] == 'new' ? ('tab=' . $_GET['tab'] . '&') : '';
-
 }
 
 $pagination = include_template('pagination.php', [

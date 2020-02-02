@@ -1,26 +1,21 @@
 <?php
 
 session_start();
-
 $isFormPage = true;
 
-require_once('functions.php');
+require_once('bootstrap.php');
 
-$connect = mysqli_connect("localhost", "root", "", "giftube");
-mysqli_set_charset($connect, "utf8");
-
-if(!$connect) {
-    print('Ошибка подключения: ' . mysqli_connect_error());
-} else {
-
-    // 1. запрос для получения списка категорий;
-    $sql_cat = 'SELECT * FROM categories';
-    $res_cat = mysqli_query($connect, $sql_cat);
-    if($res_cat) {
-        $categories = mysqli_fetch_all($res_cat, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+if ($dbHelper->getLastError()) {
+    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+}
+else {
+    // Получение списка категорий
+    $dbHelper->executeQuery('SELECT * FROM categories');
+    if (!$dbHelper->getLastError()) {
+        $categories = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -68,7 +63,9 @@ if(!$connect) {
             }
         }
 
-        $user_id = $_SESSION['user']['id'];
+        if (isset($_SESSION['user'])) {
+            $user_id = $_SESSION['user']['id'];
+        }
 
         if (count($errors)) {
             $add_form = include_template('add-form.php', [
@@ -79,26 +76,25 @@ if(!$connect) {
             ]);
         }
         else {
-            $sql = 'INSERT INTO gifs (dt_add, category_id, user_id, title, description, ' .
-                    'img_path, likes_count, favs_count, views_count) ' .
-                    'VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
+            // Запрос: загрузка гифки
+            $sql_add = 'INSERT INTO gifs (dt_add, category_id, user_id, title, description, ' .
+            'img_path, likes_count, favs_count, views_count) ' .
+            'VALUES (NOW(), ?, ?, ?, ?, ?, 0, 0, 0)';
 
-            $stmt = db_get_prepare_stmt($connect, $sql, [
+            $dbHelper->executeQuery($sql_add, [
                 $gif['category'],
                 $user_id,
                 $gif['gif-title'],
                 $gif['gif-description'],
-                $gif['img_path'],
-                0,
-                0,
-                0
+                $gif['img_path']
             ]);
 
-            $res = mysqli_stmt_execute($stmt);
-
-            if ($res) {
-                $gif_id = mysqli_insert_id($connect);
+            if (!$dbHelper->getLastError()) {
+                $gif_id = $dbHelper->getLastId();
                 header('Location: /gif.php?id=' . $gif_id);
+            }
+            else {
+                show_error('Ошибка MySQL: ', $dbHelper->getLastError());
             }
         }
 

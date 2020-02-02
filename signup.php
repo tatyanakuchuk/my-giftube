@@ -2,26 +2,22 @@
 
 $isFormPage = true;
 
-require_once('functions.php');
+require_once('bootstrap.php');
 
-$connect = mysqli_connect("localhost", "root", "", "giftube");
-mysqli_set_charset($connect, "utf8");
-
-if(!$connect) {
-    print('Ошибка подключения: ' . mysqli_connect_error());
-} else {
-
-    // 1. запрос для получения списка категорий;
-    $sql_cat = 'SELECT * FROM categories';
-    $res_cat = mysqli_query($connect, $sql_cat);
-    if($res_cat) {
-        $categories = mysqli_fetch_all($res_cat, MYSQLI_ASSOC);
-    } else {
-        $error = mysqli_error($connect);
-        print('Ошибка MySQL: ' . $error);
+if ($dbHelper->getLastError()) {
+    show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+}
+else {
+    // Получение списка категорий
+    $dbHelper->executeQuery('SELECT * FROM categories');
+    if (!$dbHelper->getLastError()) {
+        $categories = $dbHelper->getResultAsArray();
+    }
+    else {
+        show_error('Ошибка MySQL: ', $dbHelper->getLastError());
     }
 
-    // 2. send form
+    // send form
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $sign_up = $_POST;
 
@@ -51,13 +47,18 @@ if(!$connect) {
 
         // проверка на существование пользователя с таким же email
         if (!empty($email)) {
-            $sql = 'SELECT id FROM users WHERE email = "' . $email . '"';
-            $res_email = mysqli_query($connect, $sql);
-            if($res_email) {
-                $emails = mysqli_fetch_all($res_email, MYSQLI_ASSOC);
+            $sql = 'SELECT id FROM users WHERE email = ?';
+
+            $dbHelper->executeQuery($sql, [$email]);
+
+            if (!$dbHelper->getLastError()) {
+                $emails = $dbHelper->getResultAsArray();
                 if(!empty($emails)) {
                     $errors['email'] = 'Введённый вами email уже зарегистрирован. Введите другой email.';
                 }
+            }
+            else {
+                show_error('Ошибка MySQL: ', $dbHelper->getLastError());
             }
         }
 
@@ -101,29 +102,26 @@ if(!$connect) {
             $sql = 'INSERT INTO users (dt_add, name, email, password, avatar_path) ' .
                     'VALUES (NOW(), ?, ?, ?, ?)';
 
-            $stmt = db_get_prepare_stmt($connect, $sql, [
+            $dbHelper->executeQuery($sql_top_gifs, [
                 $sign_up['name'],
                 $sign_up['email'],
                 $password,
                 $sign_up['avatar_path']
             ]);
 
-            $res = mysqli_stmt_execute($stmt);
-
-            if ($res) {
-                $user_id = mysqli_insert_id($connect);
+            if (!$dbHelper->getLastError()) {
+                $user_id = $dbHelper->getLastId();
                 header('Location: /signin.php');
             }
-
+            else {
+                show_error('Ошибка MySQL: ', $dbHelper->getLastError());
+            }
         }
-
     }
     else {
         $signup_form = include_template('signup-form.php');
     }
 }
-
-// $signup_form = include_template('signup-form.php');
 
 $page_content = include_template('main.php', [
     'form' => $signup_form,
